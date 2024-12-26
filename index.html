@@ -1,0 +1,2092 @@
+<html><head><base href=".">
+<title>Multi-Language Support Chatbox AI</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<style>
+:root {
+  --primary: #10a37f;
+  --secondary: #1a7f64; 
+  --background: #343541;
+  --text: #ffffff;
+  --bot-message: #444654;
+  --user-message: #343541;
+  --hover: #2a9d8f;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--background);
+  color: var(--text);
+  line-height: 1.5;
+  overflow-x: hidden;
+  width: 100%;
+}
+
+.container {
+  width: 100%;
+  max-width: 100%;
+  padding: 1rem;
+  display: none; 
+}
+
+.chat-container {
+  background: var(--background);
+  border: none;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  height: 80vh;
+  display: flex;
+  flex-direction: column;
+  margin: 1rem;
+}
+
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+.message {
+  position: relative;
+  padding: 1rem 1.5rem;
+  margin: 0.5rem 0;
+  max-width: min(80%, max-content);
+  width: fit-content;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  border-radius: 8px;
+}
+
+.bot-message {
+  background: var(--bot-message);
+  color: var(--text);
+  border-radius: 8px;
+  margin-right: auto;
+  animation: slideFromLeft 0.3s ease;
+}
+
+.user-message {
+  background: var(--user-message);
+  color: var(--text);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  margin-left: auto;
+  animation: slideFromRight 0.3s ease;
+}
+
+@keyframes slideFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.suggested-questions {
+  padding: 1rem;
+  background: var(--bot-message);
+  border-top: 1px solid rgba(255,255,255,0.1);
+  overflow-x: auto;
+  white-space: nowrap;
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+.suggested-questions::-webkit-scrollbar {
+  display: none;
+}
+
+.suggested-question {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  margin-right: 0.5rem;
+  background: var(--background);
+  color: var(--text);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.suggested-question:hover {
+  background: rgba(124, 77, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.input-container {
+  padding: 1rem;
+  background: var(--bot-message);
+  border-top: 1px solid rgba(255,255,255,0.1);
+  display: flex;
+  gap: 1rem;
+}
+
+input, textarea {
+  flex: 1;
+  padding: 0.5rem;
+  background: var(--background);
+  color: var(--text);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+input[type="text"]:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(124, 77, 255, 0.1);
+  outline: none;
+}
+
+button {
+  padding: 0.5rem 1rem;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+button:hover {
+  background: var(--secondary);
+  transform: translateY(-1px);
+}
+
+.messages::-webkit-scrollbar {
+  width: 6px;
+}
+
+.messages::-webkit-scrollbar-track {
+  background: rgba(0,0,0,0.05);
+}
+
+.messages::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border-radius: 3px;
+}
+
+.admin-panel {
+  display: none; 
+  background: var(--background);
+  color: var(--text);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+  padding: 2rem;
+  border-radius: 8px;
+}
+
+.admin-panel.active {
+  display: block;
+}
+
+.admin-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.faq-management {
+  margin-top: 2rem;
+  padding: 1rem;
+  background: var(--bot-message);
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.saved-faqs {
+  max-height: 300px;
+  overflow-y: auto;
+  margin-top: 2rem;
+  padding: 1rem;
+  background: var(--bot-message);
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.excel-upload, .unsolved-questions {
+  margin-top: 2rem;
+  padding: 1rem;
+  background: var(--bot-message);
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.faq-form-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.faq-form-table th,
+.faq-form-table td {
+  padding: 0.5rem;
+  border: 1px solid rgba(255,255,255,0.1);
+  text-align: left;
+}
+
+.faq-form-table td input {
+  width: 100%;
+}
+
+.faq-list-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 2rem;
+}
+
+.faq-list-table th,
+.faq-list-table td {
+  padding: 0.5rem;
+  border: 1px solid rgba(255,255,255,0.1);
+  text-align: left;
+}
+
+.faq-list-table .keyword-tags {
+  margin: 0;
+}
+
+.image-preview {
+  max-width: 200px;
+  max-height: 200px;
+  cursor: pointer;
+  border-radius: 4px;
+  margin: 8px 0;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.9);
+  z-index: 1000;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal.active {
+  display: flex;
+}
+
+.modal img {
+  max-width: 90%;
+  max-height: 90vh;
+}
+
+.close-modal {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 8px;
+}
+
+.image-upload {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.link-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.link-input input {
+  flex: 1;
+  min-width: 200px;
+}
+
+#qrStatus {
+  font-size: 0.8em;
+  margin-left: 8px;
+}
+.response-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.attachment-controls {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.website-analysis {
+  margin-top: 2rem;
+  padding: 1rem;
+  background: var(--bot-message);
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.website-form {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.website-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.website-item {
+  background: var(--background);
+  padding: 1rem;
+  border-radius: 4px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.website-item .header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.website-item .timestamp {
+  font-size: 0.875rem;
+  color: rgba(255,255,255,0.6);
+}
+
+.website-item .url {
+  color: var(--primary);
+  word-break: break-all;
+}
+
+.website-item .actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.generated-questions {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+.content-preview {
+  margin: 1rem 0;
+  padding: 1rem;
+  background: rgba(255,255,255,0.05);
+  border-radius: 4px;
+}
+
+.content-text {
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: rgba(255,255,255,0.8);
+}
+
+.language-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+}
+
+.language-tabs button {
+  padding: 0.25rem 0.5rem;
+  background: var(--background);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: var(--text);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.language-tabs button:hover {
+  background: var(--primary);
+}
+
+.excel-upload {
+  margin-top: 2rem;
+  padding: 1rem;
+  background: var(--bot-message);
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.excel-controls {
+  display: flex;
+  gap: 1rem;
+  margin: 1rem 0;
+  align-items: center;
+}
+
+.excel-controls input[type="file"] {
+  flex: 1;
+  padding: 0.5rem;
+  background: var(--background);
+  color: var(--text);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 4px;
+}
+
+#uploadStatus {
+  margin-top: 1rem;
+  padding: 0.5rem;
+  border-radius: 4px;
+  background: rgba(0,0,0,0.1);
+  min-height: 2rem;
+}
+
+.faq-translate {
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: var(--bot-message);
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.translate-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.translate-inputs {
+  display: grid;
+  gap: 1rem;
+}
+
+.translate-inputs textarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 0.5rem;
+  background: var(--background);
+  color: var(--text);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 4px;
+  resize: vertical;
+}
+
+.translate-inputs input,
+.translate-inputs select {
+  width: 100%;
+  padding: 0.5rem;
+  background: var(--background);
+  color: var(--text);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 4px;
+}
+
+#translateStatus {
+  padding: 0.5rem;
+  margin-top: 0.5rem;
+  border-radius: 4px;
+  background: rgba(0,0,0,0.1);
+  text-align: center;
+}
+
+.faq-list-table td.editing {
+  padding: 0;
+}
+
+.faq-list-table td.editing input, 
+.faq-list-table td.editing textarea {
+  width: 100%;
+  height: 100%;
+  padding: 0.5rem;
+  border: 2px solid var(--primary);
+  background: var(--background);
+  color: var(--text);
+}
+
+.faq-list-table .edit-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.landing-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  background: linear-gradient(135deg, #1a1a1a 0%, #0a0a2e 100%);
+  overflow: hidden;
+}
+
+.floating-text {
+  position: absolute;
+  color: rgba(255, 255, 255, 0.1);
+  font-size: 2.5rem;
+  white-space: nowrap;
+  pointer-events: none;
+  font-weight: bold;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+}
+
+.admin-corner {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 10;
+}
+.backBtn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 10;
+}
+.language-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+  max-width: 800px;
+  margin: auto;
+  padding: 2rem;
+}
+
+.lang-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: white;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.lang-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.lang-icon {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.welcome-text {
+  text-align: center;
+  color: white;
+  font-size: 2.5rem;
+  margin: 3rem 0;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+.faq-form-table input[type="text"].keywords-input {
+  width: 100%;
+  margin: 0.2rem 0;
+  padding: 0.3rem;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 4px;
+  background: var(--background);
+  color: var(--text);
+}
+
+.faq-management {
+  margin-top: 2rem;
+  padding: 1rem;
+  background: var(--bot-message);
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+#imageInput {
+  display: inline;
+}
+
+.faq-image-preview {
+  width: 50px;
+  height: 50px;
+  object-fit: contain;
+  cursor: pointer;
+}
+
+.message .qr-code {
+  display: block;
+  margin-top: 0.5rem;
+  width: 100px;
+  height: auto;
+}
+
+.unsolved-questions {
+  margin-top: 2rem;
+}
+
+.unsolved-questions-table {
+  display: block;
+  max-height: 300px;
+  overflow-y: auto;
+  margin-top: 2rem;
+  padding: 1rem;
+  background: var(--bot-message);
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.unsolved-questions-table th,
+.unsolved-questions-table td {
+  padding: 0.5rem;
+  border: 1px solid rgba(255,255,255,0.1);
+  text-align: left;
+}
+
+.countdown-modal {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.9);
+  padding: 2rem;
+  border-radius: 1rem;
+  z-index: 1000;
+  color: white;
+  text-align: center;
+  animation: fadeIn 0.3s ease;
+}
+
+.countdown-modal.active {
+  display: block;
+}
+
+.countdown-number {
+  font-size: 4rem;
+  font-weight: bold;
+  margin: 1rem 0;
+  color: var(--primary);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .language-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 1rem;
+  }
+
+  .welcome-text {
+    font-size: 1.8rem;
+    margin: 2rem 0;
+    padding: 0 1rem;
+  }
+
+  .lang-button {
+    padding: 1rem;
+    font-size: 1rem;
+  }
+
+  .chat-container {
+    height: calc(100vh - 2rem);
+    margin: 1rem;
+  }
+
+  .message {
+    max-width: 90%;
+    padding: 0.8rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .input-container {
+    padding: 0.8rem;
+    gap: 0.5rem;
+  }
+
+  .suggested-questions {
+    padding: 0.8rem;
+  }
+
+  .suggested-question {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.9rem;
+    white-space: normal;
+    margin-bottom: 0.5rem;
+  }
+
+  /* Admin Panel Responsive Styles */
+  .admin-controls {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .faq-form-table {
+    display: block;
+    overflow-x: auto;
+    width: 100%;
+  }
+
+  .faq-form-table td {
+    min-width: 120px;
+  }
+
+  .faq-list-table {
+    display: block;
+    overflow-x: auto;
+    width: 100%;
+  }
+
+  .faq-management, 
+  .excel-upload, 
+  .unsolved-questions,
+  .saved-faqs {
+    padding: 0.8rem;
+    margin-top: 1rem;
+  }
+
+  .countdown-modal {
+    width: 90%;
+    max-width: 300px;
+    padding: 1.5rem;
+  }
+
+  .countdown-number {
+    font-size: 3rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .welcome-text {
+    font-size: 1.5rem;
+  }
+
+  .lang-button {
+    padding: 0.8rem;
+    font-size: 0.9rem;
+  }
+
+  .message {
+    max-width: 95%;
+    padding: 0.6rem 0.8rem;
+    font-size: 0.85rem;
+  }
+
+  .input-container {
+    padding: 0.6rem;
+  }
+
+  .input-container input {
+    font-size: 0.9rem;
+  }
+
+  .input-container button {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.9rem;
+  }
+
+  .suggested-question {
+    font-size: 0.85rem;
+    padding: 0.3rem 0.6rem;
+  }
+
+  /* Admin panel further adjustments */
+  .faq-form-table td,
+  .faq-list-table td {
+    padding: 0.4rem;
+    font-size: 0.85rem;
+  }
+
+  .edit-actions button {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.85rem;
+  }
+
+  .admin-panel h2,
+  .admin-panel h3 {
+    font-size: 1.2rem;
+  }
+}
+</style>
+</head>
+<body>
+
+<div id="landing-page" class="landing-page">
+  <div class="admin-corner">
+    <button id="landingAdminBtn" class="admin-btn">Admin</button>
+  </div>
+  
+  <h1 class="welcome-text">Welcome / Ho&#x15f;geldiniz / &#x645;&#x631;&#x62d;&#x628;&#x627;&#x64b;</h1>
+  
+  <div class="language-grid">
+    <button class="lang-button" data-lang="en">
+      <span class="lang-icon">&#x1f1ec;&#x1f1e7;</span>
+      English
+    </button>
+    <button class="lang-button" data-lang="tr">
+      <span class="lang-icon">&#x1f1f9;&#x1f1f7;</span>
+      Turkish
+    </button>
+    <button class="lang-button" data-lang="ar">
+      <span class="lang-icon">&#x1f1f8;&#x1f1e6;</span>
+      Arabic
+    </button>
+    <button class="lang-button" data-lang="ru">
+      <span class="lang-icon">&#x1f1f7;&#x1f1fa;</span>
+      Russian
+    </button>
+    <button class="lang-button" data-lang="fr">
+      <span class="lang-icon">&#x1f1eb;&#x1f1f7;</span>
+      French
+    </button>
+    <button class="lang-button" data-lang="de">
+      <span class="lang-icon">&#x1f1e9;&#x1f1ea;</span>
+      German
+    </button>
+    <button class="lang-button" data-lang="es">
+      <span class="lang-icon">&#x1f1ea;&#x1f1f8;</span>
+      Spanish
+    </button>
+    <button class="lang-button" data-lang="it">
+      <span class="lang-icon">&#x1f1ee;&#x1f1f9;</span>
+      Italian
+    </button>
+  </div>
+</div>
+  
+<div class="countdown-modal" id="countdownModal">
+  <h2>Session Timeout</h2>
+  <div class="countdown-number" id="countdownNumber">10</div>
+  <p>Click anywhere to continue session</p>
+</div>
+  
+<div class="container" style="display: none;"> 
+  <div id="chat-view">
+    <div class="chat-container">
+      <div class="messages" id="messages"></div>
+      
+      <div class="suggested-questions" id="suggestedQuestions"></div>
+      
+      <div class="input-container">
+        <input type="text" id="messageInput" placeholder="Type your message...">
+        <button id="sendBtn">Send</button>
+      </div>
+    </div>
+  </div>
+
+
+  <div id="admin-view" class="admin-panel">
+    <div class="admin-controls">
+      <button id="backBtn" onclick="showChat()">Back to Chat</button>
+  </div>
+      <h2>Admin Dashboard</h2>
+
+      
+      <div class="faq-management">
+        <h3>FAQ Management</h3>
+                <div class="excel-upload">
+          <h3>Excel Upload</h3>
+          <p>Upload FAQ data from Excel file</p>
+          <div class="excel-controls">
+            <input type="file" id="excelFile" accept=".xlsx">
+            <button id="uploadExcelBtn">Upload Excel</button>
+            <button id="downloadTemplateBtn">Download Template</button>
+          </div>
+          <div id="uploadStatus"></div>
+        </div>
+        <table>
+          <tr>
+            <td>
+              <select id="faqLanguage">
+                <option value="en">English</option>
+                <option value="tr">Turkish</option>
+                <option value="ar">Arabic</option>
+                <option value="ru">Russian</option>
+                <option value="fr">French</option>
+                <option value="de">German</option>
+                <option value="es">Spanish</option>
+                <option value="it">Italian</option>
+              </select>
+            </td>
+            <td><input type="text" id="questionInput" placeholder="Question"></td>
+            <td><input type="text" id="responseInput" placeholder="Response"></td>
+            <td><input type="text" class="keywords-input" placeholder="Keywords (comma separated)"></td>
+            <td><input type="text" id="linkInput" placeholder="Link URL"></td>
+          </tr>
+        </table>
+        <button id="addFaqBtn">Add FAQ</button>
+        <div class="unsolved-questions">
+          <h3>Unsolved Questions</h3>
+          <table class="unsolved-questions-table">
+            <thead>
+              <tr>
+                <th>Language</th>
+                <th>Question</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="unsolvedQuestionsList">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+        <div class="saved-faqs">
+          <h3>Saved FAQs</h3>
+          <table class="faq-list-table">
+            <thead>
+              <tr>
+                <th>Language</th>
+                <th>Question</th>
+                <th>Response</th>
+                <th>Keywords</th>
+                <th>QR Code</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="faqList">
+            </tbody>
+          </table>
+        </div>
+
+    <div class="website-analysis">
+      <h3>Website Analysis</h3>
+      <div class="website-form">
+        <input type="text" id="websiteUrl" placeholder="Enter website URL">
+        <button id="analyzeWebsiteBtn">Analyze Website</button>
+      </div>
+      <div id="websiteList" class="website-list"></div>
+    </div>
+
+    <div class="modal" id="imageModal">
+      <button class="close-modal">&#xd7;</button>
+      <img src alt="Full size image">
+    </div>
+
+<div class="countdown-modal" id="countdownModal">
+  <h2>Session Timeout</h2>
+  <div class="countdown-number" id="countdownNumber">10</div>
+  <p>Click anywhere to continue session</p>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<script>
+const welcomeMessages = {
+  en: ['Welcome to our chat! How can I help you today?', 'Good day', 'How can I help you?'],
+  tr: ['Sohbetimize hoş geldiniz! Size bugün nasıl yardımcı olabilirim?', 'İyi günler', 'Size nasıl yardımcı olabilirim?'],
+  ar: ['مرحباً بك في محادثتنا! كيف يمكنني مساعدتك اليوم؟', 'نهارك سعيد', 'كيف يمكنني مساعدتك؟'],
+  ru: ['Добро пожаловать в наш чат! Как я могу помочь вам сегодня?', 'Добрый день', 'Как я могу вам помочь?'],
+  fr: ['Bienvenue dans notre chat! Comment puis-je vous aider aujourd\'hui?', 'Bonjour', 'Comment puis-je vous aider?'],
+  de: ['Willkommen in unserem Chat! Wie kann ich Ihnen heute helfen?', 'Guten Tag', 'Wie kann ich Ihnen helfen?'],
+  es: ['¡Bienvenido a nuestro chat! ¿Cómo puedo ayudarte hoy?', 'Buenos días', '¿Cómo puedo ayudarte?'],
+  it: ['Benvenuto nella nostra chat! Come posso aiutarti oggi?', 'Buongiorno', 'Come posso aiutarti?']
+};
+
+let countdownTimer;
+let sessionTimer;
+
+function startSessionTimer() {
+  clearTimeout(sessionTimer);
+  sessionTimer = setTimeout(() => {
+    showCountdownModal();
+  }, 120000); // 120 seconds
+}
+
+function showCountdownModal() {
+  const modal = document.getElementById('countdownModal');
+  const countdownNumber = document.getElementById('countdownNumber');
+  let count = 10;
+  
+  modal.classList.add('active');
+  countdownNumber.textContent = count;
+  
+  countdownTimer = setInterval(() => {
+    count--;
+    countdownNumber.textContent = count;
+    
+    if (count <= 0) {
+      clearInterval(countdownTimer);
+      window.location.reload();
+    }
+  }, 1000);
+}
+
+function hideCountdownModal() {
+  const modal = document.getElementById('countdownModal');
+  modal.classList.remove('active');
+  clearInterval(countdownTimer);
+  startSessionTimer(); // Restart the 120-second timer
+}
+
+// Modify the setLanguage function to show welcome message 
+function setLanguage(lang) {
+  currentLanguage = lang;
+  updateUILanguage();
+  updateSuggestedQuestions();
+  document.querySelector('.container').style.display = 'block';
+  document.getElementById('landing-page').style.display = 'none';
+  
+  // Show welcome message in selected language
+  const welcomeMessage = {
+    text: welcomeMessages[lang][0], // Get first welcome message for the language
+    sender: 'bot',
+    language: lang,
+    timestamp: Date.now()
+  };
+  
+  // Clear any existing messages first
+  messagesContainer.innerHTML = '';
+  
+  // Add the welcome message
+  addMessage(welcomeMessage);
+  
+  startSessionTimer(); // Start the session timer when chat opens
+}
+
+// Add click event listener to hide modal
+document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('click', (e) => {
+    if (document.getElementById('countdownModal').classList.contains('active')) {
+      hideCountdownModal();
+    }
+  });
+});
+
+function createFloatingText() {
+  const text = document.createElement('div');
+  text.className = 'floating-text';
+  const lang = Object.keys(welcomeMessages)[Math.floor(Math.random() * Object.keys(welcomeMessages).length)];
+  const message = welcomeMessages[lang][Math.floor(Math.random() * welcomeMessages[lang].length)];
+  text.textContent = message;
+  const startX = Math.random() * window.innerWidth;
+  const startY = Math.random() * window.innerHeight;
+  const angle = Math.random() * Math.PI * 2;
+  const speed = 0.5 + Math.random() * 1;
+  text.style.left = `${startX}px`;
+  text.style.top = `${startY}px`;
+  document.querySelector('.landing-page').appendChild(text);
+  let x = startX;
+  let y = startY;
+  function animate() {
+    x += Math.cos(angle) * speed;
+    y += Math.sin(angle) * speed;
+    text.style.transform = `translate(${x - startX}px, ${y - startY}px)`;
+    if (x < -500 || x > window.innerWidth + 500 || y < -500 || y > window.innerHeight + 500) {
+      text.remove();
+    } else {
+      requestAnimationFrame(animate);
+    }
+  }
+  animate();
+}
+
+function initLandingPage() {
+  const landingPage = document.getElementById('landing-page');
+  const container = document.querySelector('.container');
+  setInterval(createFloatingText, 2000);
+  document.querySelectorAll('.lang-button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const lang = btn.dataset.lang;
+      setLanguage(lang);
+      landingPage.style.display = 'none';
+      container.style.display = 'block';
+    });
+  });
+  document.getElementById('landingAdminBtn').addEventListener('click', showAdminPanel);
+}
+
+let currentLanguage = 'en';
+let messages = [];
+let faqs = [];
+let suggestedQuestions = [];
+let websites = [];
+const adminPassword = '1234';
+const translations = {
+  en: {
+    placeholder: 'Type your message...',
+    send: 'Send'
+  },
+  tr: {
+    placeholder: 'Mesajınızı yazın...',
+    send: 'Gönder'
+  },
+  ar: {
+    placeholder: 'اكتب رسالتك...',
+    send: 'إرسال'
+  },
+  ru: {
+    placeholder: 'Введите сообщение...',
+    send: 'Отправить'
+  },
+  fr: {
+    placeholder: 'Tapez votre message...',
+    send: 'Envoyer'
+  },
+  de: {
+    placeholder: 'Nachricht eingeben...',
+    send: 'Senden'
+  },
+  es: {
+    placeholder: 'Escribe tu mensaje...',
+    send: 'Enviar'
+  },
+  it: {
+    placeholder: 'Scrivi il tuo messaggio...',
+    send: 'Invia'
+  }
+};
+
+const chatView = document.getElementById('chat-view');
+const adminView = document.getElementById('admin-view');
+const messagesContainer = document.getElementById('messages');
+const messageInput = document.getElementById('messageInput');
+const sendBtn = document.getElementById('sendBtn');
+
+sendBtn.addEventListener('click', () => {
+  sendMessage().catch(console.error);
+});
+
+async function translateText(text, sourceLang, targetLang) {
+  try {
+    const response = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${sourceLang}|${targetLang}`);
+    const data = await response.json();
+    return data.responseData.translatedText;
+  } catch (error) {
+    console.error('Translation error:', error);
+    return text;
+  }
+}
+
+document.getElementById('translateImage')?.addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      document.getElementById('translateImageName').dataset.imageData = e.target.result;
+      document.getElementById('translateImageName').textContent = file.name;
+    };
+    reader.readAsDataURL(file);
+  }
+});
+
+function generateTranslateQR() {
+  const linkInput = document.getElementById('translateLink');
+  const statusSpan = document.getElementById('translateQRStatus');
+  const url = linkInput.value.trim();
+  if (!url) {
+    statusSpan.textContent = 'Please enter a valid URL';
+    return;
+  }
+  try {
+    const qr = qrcode(0, 'L');
+    qr.addData(url);
+    qr.make();
+    const qrImage = qr.createDataURL(10);
+    statusSpan.dataset.qrData = qrImage;
+    statusSpan.textContent = 'QR Code added';
+    linkInput.value = '';
+  } catch (error) {
+    statusSpan.textContent = 'Failed to generate QR code';
+    console.error('QR generation error:', error);
+  }
+}
+
+async function extractTextFromWebsite(url) {
+  try {
+    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+    const response = await fetch(proxyUrl);
+    if (!response.ok) {
+      throw new Error('Failed to fetch website content');
+    }
+    const html = await response.text();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    const scripts = doc.getElementsByTagName('script');
+    const styles = doc.getElementsByTagName('style');
+    [...scripts, ...styles].forEach(el => el.remove());
+    const text = doc.body.textContent.replace(/\s+/g, ' ').trim();
+    return text;
+  } catch (error) {
+    console.error('Failed to extract text:', error);
+    throw error;
+  }
+}
+
+async function generateQuestionsFromText(text) {
+  const sentences = text.split(/[.!?]+/).map(s => s.trim()).filter(s => s.length > 20 && s.length < 200).slice(0, 5);
+  const questions = {
+    en: sentences.map(sentence => {
+      return `What can you tell me about "${sentence.substring(0, 50)}..."?`;
+    }),
+    tr: sentences.map(sentence => {
+      return `"${sentence.substring(0, 50)}..." hakkında ne söyleyebilirsiniz?`;
+    }),
+    ar: sentences.map(sentence => {
+      return `ماذا يمكنك أن تخبرني عن "${sentence.substring(0, 50)}..."؟`;
+    }),
+    ru: sentences.map(sentence => {
+      return `Что вы можете рассказать о "${sentence.substring(0, 50)}..."?`;
+    }),
+    fr: sentences.map(sentence => {
+      return `Pouvez-vous me dire quelque chose sur "${sentence.substring(0, 50)}..."?`;
+    }),
+    de: sentences.map(sentence => {
+      return `Können Sie mir etwas über "${sentence.substring(0, 50)}..." erzählen?`;
+    }),
+    es: sentences.map(sentence => {
+      return `¿Puedes decirme algo sobre "${sentence.substring(0, 50)}..."?`;
+    }),
+    it: sentences.map(sentence => {
+      return `Puoi dirmi qualcosa su "${sentence.substring(0, 50)}..."?`;
+    })
+  };
+  return questions;
+}
+
+function extractKeywords(text) {
+  if (!text) return [];
+  const questionAsKeywords = text.toLowerCase().replace(/[^\w\s]/g, '').trim().replace(/\s+/g, ',');
+  const words = text.toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/).filter(word => word.length > 3);
+  const wordFreq = {};
+  words.forEach(word => {
+    wordFreq[word] = (wordFreq[word] || 0) + 1;
+  });
+  const frequentKeywords = Object.entries(wordFreq).sort(([, a], [, b]) => b - a).slice(0, 5).map(([word]) => word);
+  return [...new Set([questionAsKeywords, ...frequentKeywords])];
+}
+
+async function analyzeWebsite() {
+  const urlInput = document.getElementById('websiteUrl');
+  const url = urlInput.value.trim();
+  if (!url) {
+    alert('Please enter a valid URL');
+    return;
+  }
+  try {
+    const analyzeBtn = document.getElementById('analyzeWebsiteBtn');
+    analyzeBtn.disabled = true;
+    analyzeBtn.textContent = 'Analyzing...';
+    const text = await extractTextFromWebsite(url);
+    if (!text) {
+      throw new Error('No content could be extracted');
+    }
+    const questions = await generateQuestionsFromText(text);
+    const keywords = extractKeywords(text);
+    const website = {
+      id: Date.now(),
+      url: url,
+      timestamp: new Date().toISOString(),
+      questions: questions,
+      keywords: keywords,
+      content: text.substring(0, 1000)
+    };
+    websites.push(website);
+    displayWebsites();
+    updateSuggestedQuestions();
+    urlInput.value = '';
+    alert('Website analysis completed successfully!');
+  } catch (error) {
+    console.error('Failed to analyze website:', error);
+    alert('Failed to analyze website. Please check the URL and try again.');
+  } finally {
+    const analyzeBtn = document.getElementById('analyzeWebsiteBtn');
+    analyzeBtn.disabled = false;
+    analyzeBtn.textContent = 'Analyze Website';
+  }
+}
+
+function displayWebsites() {
+  const websiteList = document.getElementById('websiteList');
+  websiteList.innerHTML = websites.map(website => {
+    const currentLangQuestions = website.questions?.[currentLanguage] || [];
+    return `
+      <div class="website-item">
+        <div class="header">
+          <div class="url">${website.url}</div>
+          <div class="timestamp">${new Date(website.timestamp).toLocaleString()}</div>
+        </div>
+        <div class="content-preview">
+          <strong>Extracted Content:</strong>
+          <div class="content-text">${website.content.substring(0, 200)}...</div>
+        </div>
+        <div class="keywords">
+          <strong>Keywords:</strong>
+          <div class="keyword-tags">
+            ${(website.keywords || []).map(k => `<span class="keyword-tag">${k}</span>`).join('')}
+          </div>
+        </div>
+        <div class="generated-questions">
+          <strong>Generated Questions:</strong>
+          <div class="language-tabs">
+            <button onclick="showLanguageQuestions('en', ${website.id})">EN</button>
+            <button onclick="showLanguageQuestions('tr', ${website.id})">TR</button>
+            <button onclick="showLanguageQuestions('ar', ${website.id})">AR</button>
+            <button onclick="showLanguageQuestions('ru', ${website.id})">RU</button>
+            <button onclick="showLanguageQuestions('fr', ${website.id})">FR</button>
+            <button onclick="showLanguageQuestions('de', ${website.id})">DE</button>
+            <button onclick="showLanguageQuestions('es', ${website.id})">ES</button>
+            <button onclick="showLanguageQuestions('it', ${website.id})">IT</button>
+          </div>
+          <ul id="questions-${website.id}">
+            ${currentLangQuestions.map(q => `<li>${q}</li>`).join('')}
+          </ul>
+        </div>
+        <div class="actions">
+          <button onclick="editWebsite(${website.id})">Edit</button>
+          <button onclick="reanalyzeWebsite(${website.id})">Reanalyze</button>
+          <button onclick="removeWebsite(${website.id})">Remove</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function showLanguageQuestions(lang, websiteId) {
+  const website = websites.find(w => w.id === websiteId);
+  if (website && website.questions && website.questions[lang]) {
+    const questionsList = document.getElementById(`questions-${websiteId}`);
+    questionsList.innerHTML = website.questions[lang].map(q => `<li>${q}</li>`).join('');
+  }
+}
+
+async function editWebsite(id) {
+  const website = websites.find(w => w.id === id);
+  if (website) {
+    const newContent = prompt('Edit website content:', website.content);
+    if (newContent) {
+      website.content = newContent;
+      website.keywords = extractKeywords(newContent);
+      website.questions = await generateQuestionsFromText(newContent);
+      displayWebsites();
+      updateSuggestedQuestions();
+    }
+  }
+}
+
+function addFaq() {
+  const selectedLang = document.getElementById('faqLanguage').value;
+  const questionInput = document.getElementById('questionInput')?.value.trim() || '';
+  const responseInput = document.getElementById('responseInput')?.value.trim() || '';
+  const keywordsInput = document.querySelector('.keywords-input')?.value.split(',').map(k => k.trim()).filter(k => k) || [];
+  const linkInput = document.getElementById('linkInput')?.value.trim() || '';
+  const imageInput = document.getElementById('imageInput');
+  let imageInputData = '';
+  const imageFile = imageInput?.files[0];
+  if (imageFile) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      imageInputData = e.target.result;
+      storeFaqData();
+    };
+    reader.readAsDataURL(imageFile);
+  } else {
+    storeFaqData();
+  }
+  function storeFaqData() {
+    const faq = {
+      id: Date.now(),
+      questions: {
+        [selectedLang]: questionInput
+      },
+      responses: {
+        [selectedLang]: responseInput
+      },
+      keywords: [...new Set(keywordsInput)],
+      link: linkInput,
+      qrCode: linkInput ? generateQRCodeForLink(linkInput) : '',
+      image: imageInputData
+    };
+    faqs.push(faq);
+    saveFaqsToLocalStorage();
+    updateFaqList();
+    updateSuggestedQuestions();
+    clearFaqForm();
+  }
+}
+
+function clearFaqForm() {
+  const elementsToClear = ['questionInput', 'responseInput', 'linkInput', 'imageInput'];
+  elementsToClear.forEach(id => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.value = '';
+    }
+  });
+  const keywordsInput = document.querySelector('.keywords-input');
+  if (keywordsInput) {
+    keywordsInput.value = '';
+  }
+}
+
+function saveFaqsToLocalStorage() {
+  try {
+    localStorage.setItem('chatboxFaqs', JSON.stringify(faqs));
+  } catch (error) {
+    console.error('Error saving FAQs to localStorage:', error);
+  }
+}
+
+function loadFaqsFromLocalStorage() {
+  try {
+    const savedFaqs = localStorage.getItem('chatboxFaqs');
+    if (savedFaqs) {
+      faqs = JSON.parse(savedFaqs);
+      updateFaqList();
+      updateSuggestedQuestions();
+    }
+  } catch (error) {
+    console.error('Error loading FAQs from localStorage:', error);
+  }
+}
+
+function updateFaqList() {
+  faqs.forEach(faq => {
+    if (faq.link && typeof faq.link === 'string') {
+      faq.qrCode = generateQRCodeForLink(faq.link);
+    }
+  });
+  const rows = faqs.flatMap(faq => {
+    return Object.entries(faq.questions).map(([lang, question]) => {
+      if (!question || !question.trim()) return '';
+      const qrCodeHtml = faq.qrCode ? `<img src="${faq.qrCode}" alt="QR Code" class="faq-image-preview" style="width: 30px; height: 30px;"/>` : 'No QR code';
+      return `
+        <tr data-faq-id="${faq.id}" data-lang="${lang}">
+          <td>${lang.toUpperCase()}</td>
+          <td class="question-cell">${question}</td>
+          <td class="response-cell">${faq.responses[lang] || ''}</td>
+          <td class="keywords-cell">${faq.keywords.join(', ')}</td>
+          <td class="qr-code-cell">${qrCodeHtml}</td>
+          <td>
+            <div class="edit-actions">
+              <button onclick="editTableRow(${faq.id}, '${lang}')">Edit</button>
+              <button onclick="deleteFaq(${faq.id})">Delete</button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).filter(row => row);
+  }).join('');
+  const faqList = document.getElementById('faqList');
+  faqList.innerHTML = rows;
+}
+
+function deleteFaq(id) {
+  faqs = faqs.filter(faq => faq.id !== id);
+  updateFaqList();
+  updateSuggestedQuestions();
+  saveFaqsToLocalStorage();
+}
+
+function updateSuggestedQuestions() {
+  const allQuestions = [...faqs.map(faq => ({
+    id: `faq_${faq.id}`,
+    text: faq.questions[currentLanguage]
+  })), ...websites.flatMap(website => website.questions[currentLanguage].map((q, i) => ({
+    id: `website_${website.id}_${i}`,
+    text: q
+  })))].filter(q => q.text && q.text.trim());
+  const suggestedQuestionsContainer = document.getElementById('suggestedQuestions');
+  suggestedQuestionsContainer.innerHTML = allQuestions.map(q => `
+    <span class="suggested-question" data-question-id="${q.id}">
+      ${q.text}
+    </span>
+  `).join('');
+  document.querySelectorAll('.suggested-question').forEach(q => {
+    q.addEventListener('click', e => {
+      const questionId = e.target.dataset.questionId;
+      const text = e.target.textContent.trim();
+      messageInput.value = text;
+      messageInput.focus();
+    });
+  });
+}
+
+async function sendMessage() {
+  const text = messageInput.value.trim();
+  if (!text) return;
+  addMessage({
+    text,
+    sender: 'user',
+    language: currentLanguage,
+    timestamp: Date.now()
+  });
+  const response = await findMatchingFaq(text);
+  messageInput.value = '';
+  setTimeout(() => {
+    addMessage({
+      text: response.text,
+      sender: 'bot',
+      language: currentLanguage,
+      timestamp: Date.now(),
+      qrCode: response.qrCode
+    });
+  }, 1000);
+}
+
+async function findMatchingFaq(query) {
+  const lowercaseQuery = query.toLowerCase();
+  messageInput.disabled = true;
+  sendBtn.disabled = true;
+  const queryKeywords = extractKeywordsFromText(lowercaseQuery);
+  const computeSimilarityScore = faq => {
+    let score = 0;
+    faq.keywords.forEach(keyword => {
+      if (lowercaseQuery.includes(keyword.toLowerCase())) {
+        score += 2;
+      }
+    });
+    const questionMatches = Object.values(faq.questions).some(faqQuestion => {
+      const similarity = calculateTextSimilarity(lowercaseQuery, faqQuestion.toLowerCase());
+      return similarity > 0.6;
+    });
+    if (questionMatches) {
+      score += 5;
+    }
+    return score;
+  };
+  const bestMatchFaq = faqs.reduce((bestMatch, currentFaq) => {
+    const currentScore = computeSimilarityScore(currentFaq);
+    return currentScore > bestMatch.score ? {
+      faq: currentFaq,
+      score: currentScore
+    } : bestMatch;
+  }, {
+    faq: null,
+    score: 0
+  });
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  messageInput.disabled = false;
+  sendBtn.disabled = false;
+  messageInput.focus();
+  if (bestMatchFaq.faq) {
+    return {
+      text: bestMatchFaq.faq.responses[currentLanguage] || getDefaultResponse(currentLanguage),
+      qrCode: bestMatchFaq.faq.qrCode
+    };
+  }
+
+  // Add unsolved question if no matching FAQ found
+  addUnsolvedQuestion(query, currentLanguage);
+  
+  return {
+    text: getDefaultResponse(currentLanguage),
+    qrCode: ''
+  };
+}
+
+function calculateTextSimilarity(text1, text2) {
+  const longer = text1.length > text2.length ? text1 : text2;
+  const shorter = text1.length > text2.length ? text2 : text1;
+  const longerLength = longer.length;
+  if (longerLength === 0) {
+    return 1.0;
+  }
+  return (longerLength - editDistance(longer, shorter)) / parseFloat(longerLength);
+}
+
+function editDistance(s1, s2) {
+  const costs = [];
+  for (let i = 0; i <= s1.length; i++) {
+    let lastValue = i;
+    for (let j = 0; j <= s2.length; j++) {
+      if (i === 0) {
+        costs[j] = j;
+      } else {
+        if (j > 0) {
+          let newValue = costs[j - 1];
+          if (s1.charAt(i - 1) !== s2.charAt(j - 1)) {
+            newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
+          }
+          costs[j - 1] = lastValue;
+          lastValue = newValue;
+        }
+      }
+    }
+    if (i > 0) {
+      costs[s2.length] = lastValue;
+    }
+  }
+  return costs[s2.length];
+}
+
+function getDefaultResponse(lang) {
+  const defaults = {
+    en: "I'm sorry, I don't have a specific answer for that question.",
+    tr: "Üzgünüm, bu soru için belirli bir cevabım yok.",
+    ar: "عذراً، ليس لدي إجابة محددة لهذا السؤال.",
+    ru: "Извините, у меня нет конкретного ответа на этот вопрос.",
+    fr: "Désolé, je n'ai pas de réponse spécifique pour cette question.",
+    de: "Entschuldigung, ich habe keine spezifische Antwort auf diese Frage.",
+    es: "Lo siento, no tengo una respuesta específica para esa pregunta.",
+    it: "Mi dispiace, non ho una risposta specifica per quella domanda."
+  };
+  return defaults[lang];
+}
+
+function addMessage(message) {
+  messages.push(message);
+  const messageEl = document.createElement('div');
+  messageEl.className = `message ${message.sender}-message`;
+  if (message.text) {
+    const textEl = document.createElement('div');
+    textEl.textContent = message.text;
+    messageEl.appendChild(textEl);
+  }
+  if (message.qrCode) {
+    const qrCodeEl = document.createElement('img');
+    qrCodeEl.src = message.qrCode;
+    qrCodeEl.alt = 'QR Code';
+    qrCodeEl.className = 'qr-code';
+    messageEl.appendChild(qrCodeEl);
+  }
+  messagesContainer.appendChild(messageEl);
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+function setLanguage(lang) {
+  currentLanguage = lang;
+  updateUILanguage();
+  updateSuggestedQuestions();
+  document.querySelector('.container').style.display = 'block';
+  document.getElementById('landing-page').style.display = 'none';
+  
+  // Show welcome message in selected language
+  const welcomeMessage = {
+    text: welcomeMessages[lang][0], // Get first welcome message for the language
+    sender: 'bot',
+    language: lang,
+    timestamp: Date.now()
+  };
+  
+  // Clear any existing messages first
+  messagesContainer.innerHTML = '';
+  
+  // Add the welcome message
+  addMessage(welcomeMessage);
+  
+  startSessionTimer(); // Start the session timer when chat opens
+}
+
+function updateUILanguage() {
+  messageInput.placeholder = translations[currentLanguage].placeholder;
+  sendBtn.textContent = translations[currentLanguage].send;
+}
+
+function showAdminPanel() {
+  const adminPassword = prompt("Enter Admin Password:");
+  if (adminPassword === '1234') {
+    chatView.style.display = 'none';
+    adminView.classList.add('active');
+  } else {
+    alert("Incorrect Password!");
+  }
+}
+
+document.getElementById('landingAdminBtn').addEventListener('click', showAdminPanel);
+
+function showChat() {
+  chatView.style.display = 'block';
+  adminView.classList.remove('active');
+}
+
+function initializeWebsiteAnalysis() {
+  const analyzeBtn = document.getElementById('analyzeWebsiteBtn');
+  if (analyzeBtn) {
+    analyzeBtn.removeEventListener('click', analyzeWebsite);
+    analyzeBtn.addEventListener('click', analyzeWebsite);
+  }
+  displayWebsites();
+}
+
+function removeWebsite(id) {
+  websites = websites.filter(w => w.id !== id);
+  displayWebsites();
+  updateSuggestedQuestions();
+}
+
+async function reanalyzeWebsite(id) {
+  const website = websites.find(w => w.id === id);
+  if (website) {
+    website.timestamp = new Date().toISOString();
+    website.questions = await generateQuestionsFromText(website.content);
+    displayWebsites();
+    updateSuggestedQuestions();
+  }
+}
+
+function editFaq(id) {
+  const faq = faqs.find(f => f.id === id);
+  if (!faq) return;
+  const questionInput = document.getElementById('questionInput');
+  if (questionInput) {
+    questionInput.value = faq.questions.en || '';
+  }
+  const elements = {
+    trQuestion: document.getElementById('trQuestion'),
+    arQuestion: document.getElementById('arQuestion'),
+    ruQuestion: document.getElementById('ruQuestion'),
+    frQuestion: document.getElementById('frQuestion'),
+    deQuestion: document.getElementById('deQuestion'),
+    esQuestion: document.getElementById('esQuestion'),
+    itQuestion: document.getElementById('itQuestion'),
+    enResponse: document.getElementById('enResponse'),
+    trResponse: document.getElementById('trResponse'),
+    arResponse: document.getElementById('arResponse'),
+    ruResponse: document.getElementById('ruResponse'),
+    frResponse: document.getElementById('frResponse'),
+    deResponse: document.getElementById('deResponse'),
+    esResponse: document.getElementById('esResponse'),
+    itResponse: document.getElementById('itResponse')
+  };
+  Object.entries(elements).forEach(([key, element]) => {
+    if (element) {
+      const [lang, type] = [key.slice(0, 2), key.slice(2).toLowerCase()];
+      const value = type === 'question' ? faq.questions[lang] : faq.responses[lang];
+      element.value = value || '';
+    }
+  });
+  const addButton = document.getElementById('addFaqBtn');
+  if (addButton) {
+    addButton.textContent = 'Update FAQ';
+    addButton.onclick = () => updateFaq(id);
+  }
+}
+
+function updateFaq(id) {
+  const faq = faqs.find(f => f.id === id);
+  if (!faq) return;
+  const questionInput = document.getElementById('questionInput');
+  faq.questions = {
+    en: questionInput ? questionInput.value : '',
+    tr: document.getElementById('trQuestion')?.value || '',
+    ar: document.getElementById('arQuestion')?.value || '',
+    ru: document.getElementById('ruQuestion')?.value || '',
+    fr: document.getElementById('frQuestion')?.value || '',
+    de: document.getElementById('deQuestion')?.value || '',
+    es: document.getElementById('esQuestion')?.value || '',
+    it: document.getElementById('itQuestion')?.value || ''
+  };
+  faq.responses = {
+    en: document.getElementById('enResponse')?.value || '',
+    tr: document.getElementById('trResponse')?.value || '',
+    ar: document.getElementById('arResponse')?.value || '',
+    ru: document.getElementById('ruResponse')?.value || '',
+    fr: document.getElementById('frResponse')?.value || '',
+    de: document.getElementById('deResponse')?.value || '',
+    es: document.getElementById('esResponse')?.value || '',
+    it: document.getElementById('itResponse')?.value || ''
+  };
+  faq.keywords = [];
+  const keywordInputs = document.querySelectorAll('input.keywords-input');
+  const allKeywords = [];
+  keywordInputs.forEach(input => {
+    const keywords = input.value.split(',').map(k => k.trim()).filter(k => k);
+    allKeywords.push(...keywords);
+  });
+  faq.keywords = [...new Set(allKeywords)];
+  clearFaqForm();
+  const addButton = document.getElementById('addFaqBtn');
+  if (addButton) {
+    addButton.textContent = 'Add FAQ';
+    addButton.onclick = addFaq;
+  }
+  updateFaqList();
+  updateSuggestedQuestions();
+}
+
+function extractKeywordsFromText(text) {
+  if (!text) return [];
+  const questionAsKeywords = text.toLowerCase().replace(/[^\w\s]/g, '').trim().replace(/\s+/g, ',');
+  const words = text.toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/).filter(word => word.length > 3);
+  const wordFreq = {};
+  words.forEach(word => {
+    wordFreq[word] = (wordFreq[word] || 0) + 1;
+  });
+  const frequentKeywords = Object.entries(wordFreq).sort(([, a], [, b]) => b - a).slice(0, 5).map(([word]) => word);
+  return [...new Set([questionAsKeywords, ...frequentKeywords])];
+}
+
+const supportedLanguages = ['en', 'tr', 'ar', 'ru', 'fr', 'de', 'es', 'it'];
+let unsolvedQuestions = [];
+
+function loadUnsolvedQuestionsFromLocalStorage() {
+  try {
+    const savedUnsolvedQuestions = localStorage.getItem('unsolvedQuestions');
+    if (savedUnsolvedQuestions) {
+      unsolvedQuestions = JSON.parse(savedUnsolvedQuestions);
+      updateUnsolvedQuestionsList();
+    }
+  } catch (error) {
+    console.error('Error loading unsolved questions from localStorage:', error);
+  }
+}
+
+function saveUnsolvedQuestionsToLocalStorage() {
+  try {
+    localStorage.setItem('unsolvedQuestions', JSON.stringify(unsolvedQuestions));
+  } catch (error) {
+    console.error('Error saving unsolved questions to localStorage:', error);
+  }
+}
+
+function addUnsolvedQuestion(question, language) {
+  const existingIndex = unsolvedQuestions.findIndex(q => q.text === question && q.language === language);
+  if (existingIndex === -1) {
+    unsolvedQuestions.push({
+      text: question,
+      language
+    });
+    updateUnsolvedQuestionsList();
+    saveUnsolvedQuestionsToLocalStorage();
+  }
+}
+
+function updateUnsolvedQuestionsList() {
+  const rows = unsolvedQuestions.map(q => `
+    <tr>
+      <td>${q.language.toUpperCase()}</td>
+      <td>${q.text}</td>
+      <td><button onclick="addUnsolvedToFAQ('${q.text}', '${q.language}')">Add to FAQ</button></td>
+    </tr>
+  `).join('');
+  document.getElementById('unsolvedQuestionsList').innerHTML = rows;
+}
+
+function addUnsolvedToFAQ(question, language) {
+  document.getElementById('faqLanguage').value = language;
+  document.getElementById('questionInput').value = question;
+  unsolvedQuestions = unsolvedQuestions.filter(q => !(q.text === question && q.language === language));
+  updateUnsolvedQuestionsList();
+  saveUnsolvedQuestionsToLocalStorage();
+}
+
+function editTableRow(faqId, lang) {
+  const faq = faqs.find(f => f.id === faqId);
+  if (!faq) return;
+  const row = document.querySelector(`tr[data-faq-id="${faqId}"][data-lang="${lang}"]`);
+  if (!row) return;
+  const questionCell = row.querySelector('.question-cell');
+  const responseCell = row.querySelector('.response-cell');
+  const keywordsCell = row.querySelector('.keywords-cell');
+  const actionsCell = row.querySelector('.edit-actions');
+  questionCell.classList.add('editing');
+  responseCell.classList.add('editing');
+  keywordsCell.classList.add('editing');
+  questionCell.innerHTML = `<input type="text" value="${faq.questions[lang]}" class="edit-question">`;
+  responseCell.innerHTML = `<textarea class="edit-response">${faq.responses[lang]}</textarea>`;
+  keywordsCell.innerHTML = `<input type="text" value="${faq.keywords.join(', ')}" class="edit-keywords">`;
+  actionsCell.innerHTML = `
+    <button onclick="saveTableRow(${faqId}, '${lang}')">Save</button>
+    <button onclick="cancelTableEdit(${faqId}, '${lang}')">Cancel</button>
+  `;
+}
+
+function saveTableRow(faqId, lang) {
+  const faq = faqs.find(f => f.id === faqId);
+  if (!faq) {
+    console.error(`FAQ with ID ${faqId} not found.`);
+    return;
+  }
+  const row = document.querySelector(`tr[data-faq-id="${faqId}"][data-lang="${lang}"]`);
+  if (!row) {
+    console.error(`Table row with FAQ ID ${faqId} and language ${lang} not found.`);
+    return;
+  }
+  const newQuestionInput = row.querySelector('.edit-question');
+  const newResponseTextarea = row.querySelector('.edit-response');
+  const newKeywordsInput = row.querySelector('.edit-keywords');
+  if (!newQuestionInput || !newResponseTextarea || !newKeywordsInput) {
+    console.error('Edit inputs are missing. Please ensure the DOM structure matches expectations.');
+    return;
+  }
+  const newQuestion = newQuestionInput.value;
+  const newResponse = newResponseTextarea.value;
+  const newKeywords = newKeywordsInput.value.split(',').map(k => k.trim()).filter(Boolean);
+  faq.questions[lang] = newQuestion;
+  faq.responses[lang] = newResponse;
+  faq.keywords = newKeywords;
+  updateFaqList();
+  updateSuggestedQuestions();
+}
+
+function cancelTableEdit(faqId, lang) {
+  updateFaqList();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  ensureQRcodesInMessagesAreProcessed();
+  initLandingPage();
+  loadFaqsFromLocalStorage();
+  loadUnsolvedQuestionsFromLocalStorage();
+  initializeWebsiteAnalysis();
+  updateUILanguage();
+  updateSuggestedQuestions();
+  document.getElementById('downloadTemplateBtn').addEventListener('click', generateExcelTemplate);
+});
+
+function ensureQRcodesInMessagesAreProcessed() {
+  messages.forEach(message => {
+    if (message.qrCode && !message.qrCodeProcessed) {
+      message.qrCodeProcessed = true;
+    }
+  });
+}
+
+document.getElementById('addFaqBtn').addEventListener('click', addFaq);
+
+async function handleExcelUpload() {
+  const file = document.getElementById('excelFile').files[0];
+  const statusDiv = document.getElementById('uploadStatus');
+  if (!file) {
+    statusDiv.innerHTML = '<span style="color: red">Please select a file first</span>';
+    return;
+  }
+  try {
+    const data = await file.arrayBuffer();
+    const workbook = XLSX.read(data);
+    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+    const jsonData = XLSX.utils.sheet_to_json(worksheet, {
+      header: 1
+    });
+    if (jsonData.length <= 1) {
+      throw new Error('File appears to be empty or invalid');
+    }
+    const questionGroups = new Map();
+    for (let i = 1; i < jsonData.length; i++) {
+      const [language, question, response, keywords, link] = jsonData[i];
+      if (!language || !question || !response) {
+        console.warn(`Skipping row ${i + 1} due to missing required fields`);
+        continue;
+      }
+      let groupId = Date.now() + i;
+      const group = questionGroups.get(groupId) || {
+        id: groupId,
+        questions: {},
+        responses: {},
+        keywords: [],
+        qrCode: ''
+      };
+      group.questions[language] = question;
+      group.responses[language] = response;
+      if (link) {
+        group.qrCode = generateQRCodeForLink(link);
+      }
+      if (keywords) {
+        group.keywords = [...new Set([...group.keywords, ...keywords.split(',').map(k => k.trim())])];
+      }
+      questionGroups.set(groupId, group);
+    }
+    faqs = [...faqs, ...Array.from(questionGroups.values())];
+    saveFaqsToLocalStorage();
+    updateFaqList();
+    updateSuggestedQuestions();
+    statusDiv.innerHTML = `<span style="color: green">Successfully imported ${questionGroups.size} FAQ entries!</span>`;
+    document.getElementById('excelFile').value = '';
+  } catch (error) {
+    console.error('Excel upload error:', error);
+    statusDiv.innerHTML = `<span style="color: red">Upload failed: ${error.message}</span>`;
+  }
+}
+
+function generateQRCodeForLink(link) {
+  if (typeof link !== 'string') {
+    console.error("Invalid link for QR code generation:", link);
+    return '';
+  }
+  const qr = qrcode(0, 'L');
+  qr.addData(link.toString());
+  qr.make();
+  return qr.createDataURL(10);
+}
+
+function generateExcelTemplate() {
+  const templateData = [['Language', 'Question', 'Response', 'Keywords', 'Link'], ['en', 'Sample question in English', 'Sample response in English', 'keyword1,keyword2', 'https://example.com']];
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(templateData);
+  XLSX.utils.book_append_sheet(wb, ws, 'FAQ Template');
+  const wbout = XLSX.write(wb, {
+    bookType: 'xlsx',
+    type: 'array'
+  });
+  const blob = new Blob([wbout], {
+    type: 'application/octet-stream'
+  });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'faq_template_with_links.xlsx';
+  a.click();
+  window.URL.revokeObjectURL(url);
+}
+
+document.getElementById('uploadExcelBtn').addEventListener('click', handleExcelUpload);
+document.getElementById('downloadTemplateBtn').addEventListener('click', generateExcelTemplate);
+
+// New function to filter suggested questions based on user input
+function filterSuggestedQuestions() {
+  const query = messageInput.value.trim().toLowerCase();
+  const suggestedQuestionsContainer = document.getElementById('suggestedQuestions');
+  const allQuestions = [...faqs.map(faq => ({
+    id: `faq_${faq.id}`,
+    text: faq.questions[currentLanguage]
+  })), ...websites.flatMap(website => website.questions[currentLanguage].map((q, i) => ({
+    id: `website_${website.id}_${i}`,
+    text: q
+  })))].filter(q => q.text && q.text.trim());
+
+  const filteredQuestions = query ? allQuestions.filter(q => q.text.toLowerCase().includes(query)) : allQuestions;
+
+  suggestedQuestionsContainer.innerHTML = filteredQuestions.map(q => `
+    <span class="suggested-question" data-question-id="${q.id}">
+      ${q.text}
+    </span>
+  `).join('');
+
+  document.querySelectorAll('.suggested-question').forEach(q => {
+    q.addEventListener('click', e => {
+      const questionId = e.target.dataset.questionId;
+      const text = e.target.textContent.trim();
+      messageInput.value = text;
+      messageInput.focus();
+    });
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  messageInput.addEventListener('input', filterSuggestedQuestions);
+  filterSuggestedQuestions(); 
+});
+</script>
+</div></div></body>
+</html>
