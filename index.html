@@ -685,6 +685,114 @@ button:hover {
     opacity: 1;
   }
 }
+
+@media screen and (max-width: 768px) {
+  .faq-management {
+    margin-top: 1rem;
+    padding: 0.5rem;
+    overflow-x: auto;
+  }
+  
+  .faq-form-table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .faq-form-table th,
+  .faq-form-table td {
+    min-width: 120px;
+    white-space: nowrap;
+  }
+
+  .saved-faqs {
+    margin-top: 1rem;
+    max-height: 300px;
+    overflow-y: auto;
+    overflow-x: auto;
+  }
+
+  .faq-list-table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+  }
+  
+  .faq-list-table th,
+  .faq-list-table td {
+    min-width: 120px;
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  .unsolved-questions {
+    margin-top: 1rem;
+    padding: 0.5rem;
+    overflow-x: auto;
+  }
+
+  .unsolved-questions-table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .unsolved-questions-table th,
+  .unsolved-questions-table td {
+    min-width: 120px;
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  .excel-upload {
+    margin-top: 1rem;
+    padding: 0.5rem;
+  }
+
+  .excel-controls {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .excel-controls input[type="file"] {
+    width: 100%;
+  }
+
+  .excel-controls button {
+    width: 100%;
+  }
+
+  .admin-panel {
+    padding: 1rem 0.5rem;
+  }
+
+  .admin-controls {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .faq-form-table input[type="text"],
+  .faq-form-table textarea,
+  .faq-form-table select {
+    width: 100%;
+    min-width: 120px;
+  }
+  
+  #addFaqBtn {
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+
+  .edit-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .edit-actions button {
+    width: 100%;
+  }
+}
 </style>
 </head>
 <body>
